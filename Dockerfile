@@ -5,14 +5,11 @@ ARG dataDir=/data
 ARG projectDir=/foss_fim
 ARG depDir=/dependencies
 ARG taudemVersion=98137bb6541a0d0077a9c95becfed4e56d0aa0ac
-ARG taudemVersion2=81f7a07cdd3721617a30ee4e087804fddbcffa88
 ENV taudemDir=$depDir/taudem/bin
-ENV taudemDir2=$depDir/taudem_accelerated_flowDirections/taudem/build/bin
 
 RUN apt-get update && apt-get install -y git  && rm -rf /var/lib/apt/lists/*
 
 RUN git clone https://github.com/dtarb/taudem.git
-RUN git clone https://github.com/fernandoa123/cybergis-toolkit.git taudem_accelerated_flowDirections
 
 RUN apt-get update --fix-missing && apt-get install -y cmake mpich \
     libgtest-dev libboost-test-dev libnetcdf-dev && rm -rf /var/lib/apt/lists/*
@@ -24,20 +21,10 @@ RUN cd taudem \
     && cd src \
     && make
 
-## Compile taudem repo with accelerated flow directions ##
-RUN cd taudem_accelerated_flowDirections/taudem \
-    && git checkout $taudemVersion2 \
-    && mkdir build \
-    && cd build \
-    && cmake .. \
-    && make
-
 RUN mkdir -p $taudemDir
-RUN mkdir -p $taudemDir2
 
 ## Move needed binaries to the next stage of the image
-RUN cd taudem/bin && mv -t $taudemDir flowdircond threshold streamnet gagewatershed catchhydrogeo dinfdistdown
-RUN cd taudem_accelerated_flowDirections/taudem/build/bin && mv -t $taudemDir2 d8flowdir dinfflowdir
+RUN cd taudem/bin && mv -t $taudemDir flowdircond streamnet gagewatershed catchhydrogeo dinfdistdown
 
 
 
@@ -56,7 +43,6 @@ ENV outputsDir=/outputs
 ENV srcDir=$projectDir/src
 ENV workDir=/fim_temp
 ENV taudemDir=$depDir/taudem/bin
-ENV taudemDir2=$depDir/taudem_accelerated_flowDirections/taudem/build/bin
 
 ## ADDING FIM GROUP ##
 ARG GroupID=1370800235
