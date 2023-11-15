@@ -31,14 +31,15 @@ def accumulate_headwaters(
 
     working_dir = os.path.dirname(loading_filename)
 
-    efficiency_filename = os.path.join(working_dir, "efficiency.tif")
-    absorption_filename = os.path.join(working_dir, "absorption.tif")
-
     with rio.open(loading_filename) as src:
         profile = src.profile
         profile.update(dtype=rio.float32, count=1, compress="lzw")
 
         data = src.read(1).astype(rio.float32)
+
+    # Additional input files
+    efficiency_filename = os.path.join(working_dir, "efficiency.tif")
+    absorption_filename = os.path.join(working_dir, "absorption.tif")
 
     efficiency = data**0
     absorption = data * 0.0
@@ -48,6 +49,7 @@ def accumulate_headwaters(
     with rio.open(absorption_filename, "w", **profile) as dst:
         dst.write(absorption, 1)
 
+    # WhiteboxTools d8_mass_flux
     wbt.d8_mass_flux(
         dem_filename, loading_filename, efficiency_filename, absorption_filename, flow_accumulation_filename
     )
@@ -55,12 +57,14 @@ def accumulate_headwaters(
     os.remove(efficiency_filename)
     os.remove(absorption_filename)
 
+    # Read WhiteboxTools flow accumulation
     with rio.open(flow_accumulation_filename) as src:
         profile = src.profile
         profile.update(dtype=rio.float32, count=1, compress="lzw", nodata=-1)
 
         data = src.read(1).astype(rio.float32)
 
+    # Set nodata value
     data[data < 0] = -1
 
     # Threshold accumulations

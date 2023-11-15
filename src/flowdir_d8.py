@@ -22,8 +22,10 @@ def flowdir_d8(dem_filename: str, out_filename: str):
         Out filename
     """
 
+    # WhiteboxTools flow direction
     wbt.d8_pointer(dem_filename, out_filename, esri_pntr=False)
 
+    # Read WhiteboxTools flow direction
     with rio.open(out_filename) as src:
         profile = src.profile
         nodata = src.nodata
@@ -45,6 +47,7 @@ def flowdir_d8(dem_filename: str, out_filename: str):
 
     del dem
 
+    # Save TauDEM flow direction
     with rio.open(out_filename, "w", **profile) as dst:
         profile.update(dtype=rio.int16, count=1, compress="lzw")
         dst.write(data, 1)
