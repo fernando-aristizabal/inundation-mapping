@@ -11,7 +11,9 @@ wbt = whitebox.WhiteboxTools()
 wbt.set_verbose_mode(False)
 
 
-def fill_depressions(dem_filename: str, out_filename: str):
+def fill_depressions(
+    dem_filename: str, out_filename: str, fix_flats=True, flat_increment=None, max_depth=None
+):
     """
     Fill depressions in DEM
 
@@ -21,15 +23,18 @@ def fill_depressions(dem_filename: str, out_filename: str):
         DEM filename
     out_filename : str
         Out filename
+    fix_flats : bool
+        Fix flats
+    flat_increment : float
+        Flat increment
+    max_depth : float
+        Max depth
     """
 
     assert os.path.isfile(dem_filename), 'ERROR: DEM file not found: ' + str(dem_filename)
 
     # Fill depressions
-    if (
-        wbt.fill_depressions(dem_filename, out_filename, fix_flats=True, flat_increment=None, max_depth=None)
-        != 0
-    ):
+    if wbt.fill_depressions(dem_filename, out_filename, fix_flats, flat_increment, max_depth) != 0:
         raise Exception('ERROR: WhiteboxTools fill_depressions failed')
 
     # Convert from double to float

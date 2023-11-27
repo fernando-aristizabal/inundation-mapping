@@ -78,7 +78,7 @@ def accumulate_headwaters(
     # Update nodata values
     data[data < 0] = -1
 
-    # Threshold accumulations
+    # Threshold accumulations (alternatively coud use wbt.extract_streams?)
     data[data > 0] = 1
 
     # Write output
