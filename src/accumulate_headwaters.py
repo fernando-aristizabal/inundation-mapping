@@ -12,10 +12,14 @@ wbt.set_verbose_mode(False)
 
 
 def accumulate_headwaters(
-    dem_filename: str, loading_filename: str, flow_accumulation_filename: str, stream_pixel_filename: str
+    dem_filename: str,
+    loading_filename: str,
+    flow_accumulation_filename: str,
+    stream_pixel_filename: str,
+    nodata=-32768,
 ):
     """
-    Accumulate and threshold headwaters to produce stream pixels
+    Accumulate and threshold headwaters to produce stream pixels using WhiteboxTools d8_mass_flux
 
     Parameters
     ----------
@@ -71,18 +75,19 @@ def accumulate_headwaters(
     # Read flow accumulated headwaters
     with rio.open(flow_accumulation_filename) as src:
         profile = src.profile
-        profile.update(dtype=rio.float32, count=1, compress="lzw", nodata=-1)
+        profile.update(dtype=rio.float32, count=1, compress="lzw", nodata=nodata)
 
         data = src.read(1).astype(rio.float32)
 
     # Update nodata values
-    data[data < 0] = -1
+    data[data < 0] = nodata
 
     # Threshold accumulations (alternatively coud use wbt.extract_streams?)
     data[data > 0] = 1
 
     # Write output
     with rio.open(stream_pixel_filename, "w", **profile) as dst:
+        dst.nodata = nodata
         dst.write(data, 1)
 
 

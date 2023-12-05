@@ -29,6 +29,8 @@ def flowdir_d8(dem_filename: str, out_filename: str):
     if wbt.d8_pointer(dem_filename, out_filename, esri_pntr=False) != 0:
         raise Exception('ERROR: WhiteboxTools d8_pointer failed')
 
+    assert os.path.isfile(out_filename), 'ERROR: flowdir file not found: ' + str(out_filename)
+
     with rio.open(out_filename) as src:
         profile = src.profile
         nodata = src.nodata
