@@ -68,7 +68,7 @@ echo -e $startDiv"Performing lateral thalweg adjustment $hucNumber $current_bran
 date -u
 Tstart
 python3 $srcDir/adjust_thalweg_lateral.py \
-    -e $tempCurrentBranchDataDir/dem_meters_$current_branch_id.tif \
+    -e $tempCurrentBranchDataDir/dem_burned_filled_$current_branch_id.tif \
     -s $tempCurrentBranchDataDir/demDerived_streamPixels_$current_branch_id.tif \
     -a $tempCurrentBranchDataDir/demDerived_streamPixels_ids_"$current_branch_id"_allo.tif \
     -d $tempCurrentBranchDataDir/demDerived_streamPixels_ids_"$current_branch_id"_dist.tif \
@@ -123,26 +123,6 @@ Tcount
 #     -net $tempCurrentBranchDataDir/demDerived_reaches_$current_branch_id.shp
 # Tcount
 
-## STRAHLER STREAM ORDER ##
-echo -e $startDiv"Strahler stream order $hucNumber $current_branch_id"
-date -u
-Tstart
-python3 $srcDir/strahler_stream_order.py \
-    -d8_pntr $tempCurrentBranchDataDir/flowdir_d8_burned_filled_$current_branch_id.tif \
-    -stream $tempCurrentBranchDataDir/demDerived_streamPixels_$current_branch_id.tif \
-    -out $tempCurrentBranchDataDir/streamOrder_$current_branch_id.tif
-Tcount
-
-## DEM-DERIVED REACHES ##
-echo -e $startDiv"DEM-derived reaches $hucNumber $current_branch_id"
-date -u
-Tstart
-python3 $srcDir/raster_streams_to_vector.py \
-    -d8_pntr $tempCurrentBranchDataDir/flowdir_d8_burned_filled_$current_branch_id.tif \
-    -streams $tempCurrentBranchDataDir/demDerived_streamPixels_$current_branch_id.tif \
-    -out $tempCurrentBranchDataDir/demDerived_reaches_$current_branch_id.gpkg
-Tcount
-
 ## VECTOR STREAM NETWORK ANALYSIS ##
 echo -e $startDiv"Vector stream network analysis $hucNumber $current_branch_id"
 date -u
@@ -151,20 +131,25 @@ python3 $srcDir/vector_stream_network_analysis.py \
     -dem $tempCurrentBranchDataDir/dem_thalwegCond_$current_branch_id.tif \
     -d8_pntr $tempCurrentBranchDataDir/flowdir_d8_burned_filled_$current_branch_id.tif \
     -streams $tempCurrentBranchDataDir/demDerived_streamPixels_$current_branch_id.tif \
-    -out $tempCurrentBranchDataDir/demDerived_reaches_$current_branch_id.gpkg
+    -vector $tempCurrentBranchDataDir/demDerived_reaches_$current_branch_id.shp \
+    -analysis $tempCurrentBranchDataDir/demDerived_reaches_analysis_$current_branch_id.shp \
+    -id $tempCurrentBranchDataDir/demDerived_stream_link_id_$current_branch_id.tif \
+    -length $tempCurrentBranchDataDir/demDerived_stream_link_length_$current_branch_id.tif \
+    -slope $tempCurrentBranchDataDir/demDerived_stream_link_slope_$current_branch_id.tif
+
 Tcount
-
-
 
 ## SPLIT DERIVED REACHES ##
 echo -e $startDiv"Split Derived Reaches $hucNumber $current_branch_id"
 date -u
 Tstart
-$srcDir/split_flows.py -f $tempCurrentBranchDataDir/demDerived_reaches_$current_branch_id.shp \
+$srcDir/split_flows.py \
+    -f $tempCurrentBranchDataDir/demDerived_reaches_$current_branch_id.shp \
     -d $tempCurrentBranchDataDir/dem_thalwegCond_$current_branch_id.tif \
     -s $tempCurrentBranchDataDir/demDerived_reaches_split_$current_branch_id.gpkg \
     -p $tempCurrentBranchDataDir/demDerived_reaches_split_points_$current_branch_id.gpkg \
-    -w $tempHucDataDir/wbd8_clp.gpkg -l $tempHucDataDir/nwm_lakes_proj_subset.gpkg \
+    -w $tempHucDataDir/wbd8_clp.gpkg \
+    -l $tempHucDataDir/nwm_lakes_proj_subset.gpkg \
     -n $b_arg \
     -m $max_split_distance_meters \
     -t $slope_min \

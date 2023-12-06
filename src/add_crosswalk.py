@@ -227,7 +227,7 @@ def add_crosswalk(
             elif len(output_flows.loc[output_flows.From_Node == to_node]['HydroID']) > 1:
                 try:
                     max_order = max(
-                        output_flows.loc[output_flows.From_Node == to_node]['HydroID']['order_']
+                        output_flows.loc[output_flows.From_Node == to_node]['order_']
                     )  # drainage area would be better than stream order but we would need to calculate
                 except Exception as e:
                     print(
