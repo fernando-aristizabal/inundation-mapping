@@ -174,11 +174,11 @@ def subset_vector_layers(
 
     if len(nwm_streams) > 0:
         # Address issue where NWM streams exit the HUC boundary and then re-enter, creating a MultiLineString
+        # Find and keep the downstream segment of the NWM nonoutlet stream
         nwm_streams_nonoutlets = (
             gpd.clip(nwm_streams_nonoutlets, wbd_streams_buffer).explode(index_parts=True).reset_index()
         )
 
-        # Find and keep the downstream segment of the NWM stream
         max_parts = nwm_streams_nonoutlets[['level_0', 'level_1']].groupby('level_0').max()
 
         nwm_streams_nonoutlets = nwm_streams_nonoutlets.merge(max_parts, on='level_0', suffixes=('', '_max'))
@@ -188,6 +188,13 @@ def subset_vector_layers(
         ]
 
         nwm_streams_nonoutlets = nwm_streams_nonoutlets.drop(columns=['level_1_max'])
+
+        # Find and keep the upstream segment of the NWM outlet stream
+        nwm_streams_outlets = (
+            gpd.clip(nwm_streams_outlets, wbd_buffer).explode(index_parts=True).reset_index()
+        )
+
+        nwm_streams_outlets = nwm_streams_outlets[nwm_streams_outlets['level_1'] == 0]
 
         nwm_streams = pd.concat([nwm_streams_nonoutlets, nwm_streams_outlets])
 
