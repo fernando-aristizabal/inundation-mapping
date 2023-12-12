@@ -43,17 +43,6 @@ python3 $srcDir/accumulate_headwaters.py \
     -stream $tempCurrentBranchDataDir/demDerived_streamPixels_$current_branch_id.tif
 Tcount
 
-# ## EXTRACT STREAMS ##
-# echo -e $startDiv"Extract streams $hucNumber $current_branch_id"
-# date -u
-# Tstart
-# python3 $srcDir/extract_streams.py \
-#     -fa $tempCurrentBranchDataDir/flowaccum_d8_burned_filled_$current_branch_id.tif \
-#     -out $tempCurrentBranchDataDir/flowaccum_d8_burned_filled_$current_branch_id.tif \
-#     -threshold 1.0 \
-#     -zero
-# Tcount
-
 ## PREPROCESSING FOR LATERAL THALWEG ADJUSTMENT ###
 echo -e $startDiv"Preprocessing for lateral thalweg adjustment $hucNumber $current_branch_id"
 date -u
@@ -68,7 +57,7 @@ echo -e $startDiv"Performing lateral thalweg adjustment $hucNumber $current_bran
 date -u
 Tstart
 python3 $srcDir/adjust_thalweg_lateral.py \
-    -e $tempCurrentBranchDataDir/dem_burned_filled_$current_branch_id.tif \
+    -e $tempCurrentBranchDataDir/dem_meters_$current_branch_id.tif \
     -s $tempCurrentBranchDataDir/demDerived_streamPixels_$current_branch_id.tif \
     -a $tempCurrentBranchDataDir/demDerived_streamPixels_ids_"$current_branch_id"_allo.tif \
     -d $tempCurrentBranchDataDir/demDerived_streamPixels_ids_"$current_branch_id"_dist.tif \
@@ -98,6 +87,16 @@ $taudemDir/flowdircond -p $tempCurrentBranchDataDir/flowdir_d8_burned_filled_flo
     -zfdc $tempCurrentBranchDataDir/dem_thalwegCond_$current_branch_id.tif
 Tcount
 
+## PIT REMOVE BURNED DEM - BRANCH 0 (include all NWM streams) ##
+echo -e $startDiv"Pit remove Burned DEM $hucNumber $branch_zero_id"
+date -u
+Tstart
+python3 $srcDir/fill_depressions.py \
+    -dem $tempCurrentBranchDataDir/dem_thalwegCond_$branch_zero_id.tif \
+    -out $tempCurrentBranchDataDir/dem_thalwegCond_filled_$branch_zero_id.tif \
+    -f 0.0001
+Tcount
+
 ## D8 SLOPES ##
 echo -e $startDiv"D8 Slopes from DEM $hucNumber $current_branch_id"
 date -u
@@ -107,35 +106,19 @@ mpiexec -n $ncores_fd $taudemDir2/d8flowdir \
     -sd8 $tempCurrentBranchDataDir/slopes_d8_dem_meters_$current_branch_id.tif
 Tcount
 
-# ## STREAMNET FOR REACHES ##
-# echo -e $startDiv"Stream Net for Reaches $hucNumber $current_branch_id"
-# date -u
-# Tstart
-# $taudemDir/streamnet \
-#     -p $tempCurrentBranchDataDir/flowdir_d8_burned_filled_$current_branch_id.tif \
-#     -fel $tempCurrentBranchDataDir/dem_thalwegCond_$current_branch_id.tif \
-#     -ad8 $tempCurrentBranchDataDir/flowaccum_d8_burned_filled_$current_branch_id.tif \
-#     -src $tempCurrentBranchDataDir/demDerived_streamPixels_$current_branch_id.tif \
-#     -ord $tempCurrentBranchDataDir/streamOrder_$current_branch_id.tif \
-#     -tree $tempCurrentBranchDataDir/treeFile_$current_branch_id.txt \
-#     -coord $tempCurrentBranchDataDir/coordFile_$current_branch_id.txt \
-#     -w $tempCurrentBranchDataDir/sn_catchments_reaches_$current_branch_id.tif \
-#     -net $tempCurrentBranchDataDir/demDerived_reaches_$current_branch_id.shp
-# Tcount
-
 ## VECTOR STREAM NETWORK ANALYSIS ##
 echo -e $startDiv"Vector stream network analysis $hucNumber $current_branch_id"
 date -u
 Tstart
 python3 $srcDir/vector_stream_network_analysis.py \
-    -dem $tempCurrentBranchDataDir/dem_thalwegCond_$current_branch_id.tif \
-    -d8_pntr $tempCurrentBranchDataDir/flowdir_d8_burned_filled_$current_branch_id.tif \
+    -dem $tempCurrentBranchDataDir/dem_thalwegCond_filled_$current_branch_id.tif \
+    -d8_pntr $tempCurrentBranchDataDir/flowdir_d8_burned_filled_${current_branch_id}_wbt.tif \
     -streams $tempCurrentBranchDataDir/demDerived_streamPixels_$current_branch_id.tif \
     -vector $tempCurrentBranchDataDir/demDerived_reaches_$current_branch_id.shp \
     -analysis $tempCurrentBranchDataDir/demDerived_reaches_analysis_$current_branch_id.shp \
-    -id $tempCurrentBranchDataDir/demDerived_stream_link_id_$current_branch_id.tif \
-    -length $tempCurrentBranchDataDir/demDerived_stream_link_length_$current_branch_id.tif \
-    -slope $tempCurrentBranchDataDir/demDerived_stream_link_slope_$current_branch_id.tif
+    -id $tempCurrentBranchDataDir/demDerived_reach_id_$current_branch_id.tif \
+    -length $tempCurrentBranchDataDir/demDerived_reach_length_$current_branch_id.tif \
+    -slope $tempCurrentBranchDataDir/demDerived_reach_slope_$current_branch_id.tif
 
 Tcount
 
@@ -145,7 +128,7 @@ date -u
 Tstart
 $srcDir/split_flows.py \
     -f $tempCurrentBranchDataDir/demDerived_reaches_$current_branch_id.shp \
-    -d $tempCurrentBranchDataDir/dem_thalwegCond_$current_branch_id.tif \
+    -d $tempCurrentBranchDataDir/dem_thalwegCond_filled_$current_branch_id.tif \
     -s $tempCurrentBranchDataDir/demDerived_reaches_split_$current_branch_id.gpkg \
     -p $tempCurrentBranchDataDir/demDerived_reaches_split_points_$current_branch_id.gpkg \
     -w $tempHucDataDir/wbd8_clp.gpkg \
@@ -192,7 +175,7 @@ Tcount
 echo -e $startDiv"D8 REM $hucNumber $current_branch_id"
 date -u
 Tstart
-$srcDir/make_rem.py -d $tempCurrentBranchDataDir/dem_thalwegCond_"$current_branch_id".tif \
+$srcDir/make_rem.py -d $tempCurrentBranchDataDir/dem_thalwegCond_filled_"$current_branch_id".tif \
     -w $tempCurrentBranchDataDir/gw_catchments_pixels_$current_branch_id.tif \
     -o $tempCurrentBranchDataDir/rem_$current_branch_id.tif \
     -t $tempCurrentBranchDataDir/demDerived_streamPixels_$current_branch_id.tif

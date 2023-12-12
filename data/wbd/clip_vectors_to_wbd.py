@@ -198,6 +198,8 @@ def subset_vector_layers(
 
         nwm_streams = pd.concat([nwm_streams_nonoutlets, nwm_streams_outlets])
 
+        nwm_streams = nwm_streams.drop(columns=['level_0', 'level_1'])
+
         nwm_streams.to_file(
             subset_nwm_streams,
             driver=getDriver(subset_nwm_streams),

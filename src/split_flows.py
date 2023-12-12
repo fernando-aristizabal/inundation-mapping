@@ -73,9 +73,7 @@ def split_flows(
         # When we split we should get 3 segments, the most downstream one
         # the tiny 1 meter segment that falls within the snapped point buffer, and the most upstream one.
         # We want that last one which is why we trimmed_line[len(trimmed_line)-1]
-        last_line_segment = pd.DataFrame(
-            {'id': ['first'], 'geometry': [trimmed_line.geoms[len(trimmed_line.geoms) - 1].wkt]}
-        )
+        last_line_segment = pd.DataFrame({'id': ['first'], 'geometry': [trimmed_line.geoms[0].wkt]})
         # when we update geopandas verison: last_line_segment = gpd.GeoSeries.from_wkt(last_line_segment)
         last_line_segment['geometry'] = last_line_segment['geometry'].apply(wkt.loads)
         last_line_segment_geodataframe = gpd.GeoDataFrame(last_line_segment).set_crs(flow.crs)

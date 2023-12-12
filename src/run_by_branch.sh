@@ -119,7 +119,7 @@ if [ -f $tempHucDataDir/usgs_subset_gages.gpkg ]; then
         -flows $tempCurrentBranchDataDir/demDerived_reaches_split_filtered_$current_branch_id.gpkg \
         -cat $tempCurrentBranchDataDir/gw_catchments_reaches_filtered_addedAttributes_crosswalked_$current_branch_id.gpkg \
         -dem $tempCurrentBranchDataDir/dem_meters_$current_branch_id.tif \
-        -dem_adj $tempCurrentBranchDataDir/dem_thalwegCond_$current_branch_id.tif \
+        -dem_adj $tempCurrentBranchDataDir/dem_thalwegCond_filled$current_branch_id.tif \
         -out $tempCurrentBranchDataDir \
         -b $current_branch_id
     Tcount

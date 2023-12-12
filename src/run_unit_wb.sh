@@ -213,8 +213,9 @@ echo -e $startDiv"Pit remove Burned DEM $hucNumber $branch_zero_id"
 date -u
 Tstart
 python3 $srcDir/fill_depressions.py \
-    -dem $tempCurrentBranchDataDir/dem_burned_$current_branch_id.tif \
-    -out $tempCurrentBranchDataDir/dem_burned_filled_$branch_zero_id.tif
+    -dem $tempCurrentBranchDataDir/dem_burned_$branch_zero_id.tif \
+    -out $tempCurrentBranchDataDir/dem_burned_filled_$branch_zero_id.tif \
+    -f 0.0001
 Tcount
 
 ## PIT REMOVE BURNED DEM - BRANCHES (NOT 0) (NWM levelpath streams) ##
@@ -224,7 +225,8 @@ if [ "$levelpaths_exist" = "1" ]; then
     Tstart
     python3 $srcDir/fill_depressions.py \
         -dem $tempHucDataDir/dem_burned.tif \
-        -out $tempHucDataDir/dem_burned_filled.tif
+        -out $tempHucDataDir/dem_burned_filled.tif \
+        -f 0.0001
     Tcount
 fi
 
@@ -234,7 +236,7 @@ date -u
 Tstart
 python3 $srcDir/flowdir_d8.py \
     -dem $tempCurrentBranchDataDir/dem_burned_filled_$branch_zero_id.tif \
-    -out $tempCurrentBranchDataDir/flowdir_d8_burned_filled_$branch_zero_id.tif
+    -flowdir $tempCurrentBranchDataDir/flowdir_d8_burned_filled_$branch_zero_id.tif
 Tcount
 
 ## D8 FLOW DIR - BRANCHES (NOT 0) (NWM levelpath streams) ##
@@ -244,7 +246,7 @@ if [ "$levelpaths_exist" = "1" ]; then
     Tstart
     python3 $srcDir/flowdir_d8.py \
         -dem $tempHucDataDir/dem_burned_filled.tif \
-        -out $tempHucDataDir/flowdir_d8_burned_filled.tif
+        -flowdir $tempHucDataDir/flowdir_d8_burned_filled.tif
     Tcount
 fi
 

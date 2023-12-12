@@ -28,8 +28,7 @@ def vector_stream_network_analysis(
     Create vector stream network and add attributes like Strahler stream order
         1. D8 pointer: This tool calculates a D8 flow pointer raster from an input DEM.
         2. Raster streams to vector: This tool converts a raster stream file into a vector file.
-        3. Repair stream vector topology: This tool repairs the topological errors in a vector stream network.
-        4. Vector stream network analysis: This tool performs common stream network analysis operations on an
+        3. Vector stream network analysis: This tool performs common stream network analysis operations on an
            input vector stream file.
 
     Parameters
@@ -45,14 +44,14 @@ def vector_stream_network_analysis(
     """
 
     # Check input files
-    assert os.path.isfile(dem_filename), 'ERROR: DEM file not found: ' + str(dem_filename)
-    assert os.path.isfile(stream_raster_filename), 'ERROR: stream raster file not found: ' + str(
+    assert os.path.isfile(dem_filename), 'ERROR: input DEM file not found: ' + str(dem_filename)
+    assert os.path.isfile(stream_raster_filename), 'ERROR: input stream raster file not found: ' + str(
         stream_raster_filename
     )
 
     def d8_pointer(dem_filename, d8_pntr_filename, pntr):
         """
-        Create flow direction raster from DEM
+        Create flow direction raster from DEM. Wrapper for WhiteboxTools d8_pointer.
 
         Parameters
         ----------
@@ -106,6 +105,21 @@ def vector_stream_network_analysis(
     def stream_link_identifier(
         d8_pntr, stream_raster_filename, stream_id_filename, pntr, zero_background=False
     ):
+        """
+        Wrapper for WhiteboxTools stream_link_identifier
+
+        Parameters
+        ----------
+        d8_pntr: str
+            Flow accumulation filename
+        stream_raster_filename: str
+            Stream raster filename
+        stream_id_filename: str
+            Stream link identifier filename
+        pntr: str
+            Output pointer mapping
+        """
+
         if pntr in ['TauDEM', 'wbt']:
             esri_pntr = False
         elif pntr == 'esri':
@@ -122,6 +136,21 @@ def vector_stream_network_analysis(
     def stream_link_length(
         d8_pntr, stream_link_filename, stream_length_filename, pntr, zero_background=False
     ):
+        """
+        Wrapper for WhiteboxTools stream_link_length
+
+        Parameters
+        ----------
+        d8_pntr: str
+            Flow accumulation filename
+        stream_link_filename: str
+            Stream link identifier filename
+        stream_length_filename: str
+            Stream link length filename
+        pntr: str
+            Output pointer mapping
+        """
+
         if pntr in ['TauDEM', 'wbt']:
             esri_pntr = False
         elif pntr == 'esri':
@@ -138,6 +167,23 @@ def vector_stream_network_analysis(
     def stream_link_slope(
         d8_pntr, stream_link_filename, dem_filename, stream_slope_filename, pntr, zero_background=False
     ):
+        """
+        Wrapper for WhiteboxTools stream_link_slope
+
+        Parameters
+        ----------
+        d8_pntr: str
+            Flow accumulation filename
+        stream_link_filename: str
+            Stream link identifier filename
+        dem_filename: str
+            DEM filename
+        stream_slope_filename: str
+            Stream link slope filename
+        pntr: str
+            Output pointer mapping
+        """
+
         if pntr in ['TauDEM', 'wbt']:
             esri_pntr = False
         elif pntr == 'esri':
@@ -152,6 +198,21 @@ def vector_stream_network_analysis(
             raise Exception('ERROR: WhiteboxTools stream_link_slope failed')
 
     def raster_streams_to_vector(stream_raster_filename, d8_pntr_filename, stream_vector_filename, pntr):
+        """
+        Wrapper for WhiteboxTools raster_streams_to_vector
+
+        Parameters
+        ----------
+        stream_raster_filename: str
+            Stream raster filename
+        d8_pntr: str
+            Flow accumulation filename
+        stream_vector_filename: str
+            Stream vector filename
+        pntr: str
+            Output pointer mapping
+        """
+
         if pntr in ['TauDEM', 'wbt']:
             esri_pntr = False
         elif pntr == 'esri':
@@ -171,20 +232,6 @@ def vector_stream_network_analysis(
         ), 'ERROR: stream vector file not created from raster_streams_to_vector: ' + str(
             stream_vector_filename
         )
-
-    # def repair_stream_vector_topology(stream_vector_filename_in, stream_vector_filename_out, dist):
-    #     # Repair stream vector topology
-    #     if (
-    #         wbt.repair_stream_vector_topology(stream_vector_filename_in, stream_vector_filename_out, dist)
-    #         != 0
-    #     ):
-    #         raise Exception('ERROR: WhiteboxTools repair_stream_vector_topology failed')
-
-    #     assert os.path.isfile(
-    #         stream_vector_filename
-    #     ), 'ERROR: stream vector file not created from repair_stream_vector_topology: ' + str(
-    #         stream_vector_filename
-    #     )
 
     def vector_stream_network_analysis(
         stream_vector_filename,
@@ -249,8 +296,8 @@ def vector_stream_network_analysis(
 
         stream_vector.to_file(stream_vector_filename, crs=crs)
 
-    # Create flow direction raster
-    d8_pointer(dem_filename, d8_pntr_filename, pntr)
+    # # Create flow direction raster
+    # d8_pointer(dem_filename, d8_pntr_filename, pntr)
 
     # Stream link identifier
     stream_link_identifier(
@@ -269,9 +316,6 @@ def vector_stream_network_analysis(
 
     # Raster streams to vector
     raster_streams_to_vector(stream_id_filename, d8_pntr_filename, stream_vector_filename, pntr)
-
-    # Repair stream vector topology
-    # repair_stream_vector_topology(stream_vector_filename, stream_vector_filename, dist=1.0)
 
     # Vector stream network analysis
     vector_stream_network_analysis(
