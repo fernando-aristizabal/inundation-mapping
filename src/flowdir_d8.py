@@ -25,8 +25,9 @@ def flowdir_d8(dem_filename: str, flowdir_filename: str):
 
     assert os.path.isfile(dem_filename), 'ERROR: flowdir file not found: ' + str(dem_filename)
 
-    flowdir_filename_splitext = os.path.splitext(flowdir_filename)
-    wbt_flowdir_filename = flowdir_filename_splitext[0] + '_wbt' + flowdir_filename_splitext[1]
+    wbt_flowdir_filename = os.path.join(
+        os.path.dirname(flowdir_filename), 'wbt-' + os.path.basename(flowdir_filename)
+    )
 
     # Compute WhiteboxTools flow direction
     if wbt.d8_pointer(dem_filename, wbt_flowdir_filename, esri_pntr=False) != 0:

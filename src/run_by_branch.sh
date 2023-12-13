@@ -61,8 +61,8 @@ Tstart
 $srcDir/clip_rasters_to_branches.py -d $current_branch_id \
     -b $tempHucDataDir/branch_polygons.gpkg \
     -i $branch_id_attribute \
-    -r $tempHucDataDir/dem_meters.tif $tempHucDataDir/dem_burned_filled.tif $tempHucDataDir/flowdir_d8_burned_filled.tif \
-    -c $tempCurrentBranchDataDir/dem_meters.tif $tempCurrentBranchDataDir/dem_burned_filled.tif $tempCurrentBranchDataDir/flowdir_d8_burned_filled.tif \
+    -r $tempHucDataDir/dem_meters.tif $tempHucDataDir/dem_burned_filled.tif $tempHucDataDir/flowdir_d8_burned_filled.tif $tempHucDataDir/wbt-flowdir_d8_burned_filled.tif \
+    -c $tempCurrentBranchDataDir/dem_meters.tif $tempCurrentBranchDataDir/dem_burned_filled.tif $tempCurrentBranchDataDir/flowdir_d8_burned_filled.tif $tempCurrentBranchDataDir/wbt-flowdir_d8_burned_filled.tif \
     -v
 Tcount
 
@@ -119,7 +119,7 @@ if [ -f $tempHucDataDir/usgs_subset_gages.gpkg ]; then
         -flows $tempCurrentBranchDataDir/demDerived_reaches_split_filtered_$current_branch_id.gpkg \
         -cat $tempCurrentBranchDataDir/gw_catchments_reaches_filtered_addedAttributes_crosswalked_$current_branch_id.gpkg \
         -dem $tempCurrentBranchDataDir/dem_meters_$current_branch_id.tif \
-        -dem_adj $tempCurrentBranchDataDir/dem_thalwegCond_filled$current_branch_id.tif \
+        -dem_adj $tempCurrentBranchDataDir/dem_thalwegCond_filled_$current_branch_id.tif \
         -out $tempCurrentBranchDataDir \
         -b $current_branch_id
     Tcount

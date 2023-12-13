@@ -133,6 +133,12 @@ def vector_stream_network_analysis(
         ):
             raise Exception('ERROR: WhiteboxTools stream_link_identifier failed')
 
+        assert os.path.isfile(
+            stream_id_filename
+        ), 'ERROR: stream_link_identifier file not created from stream_link_identifier: ' + str(
+            stream_id_filename
+        )
+
     def stream_link_length(
         d8_pntr, stream_link_filename, stream_length_filename, pntr, zero_background=False
     ):

@@ -17,7 +17,7 @@ T_total_start
 
 ## MASK LEVEE-PROTECTED AREAS FROM DEM ##
 if [ "$mask_leveed_area_toggle" = "True" ] && [ -f $tempHucDataDir/LeveeProtectedAreas_subset.gpkg ]; then
-    echo -e $startDiv"Mask levee-protected areas from DEM (*Overwrite dem_meters.tif output) $hucNumber $branch_zero_id"
+    echo -e $startDiv"Mask levee-protected areas from DEM (*Overwrite dem_meters.tif output) $hucNumber $current_branch_id"
     date -u
     Tstart
     python3 $srcDir/mask_dem.py \
@@ -88,13 +88,13 @@ $taudemDir/flowdircond -p $tempCurrentBranchDataDir/flowdir_d8_burned_filled_flo
 Tcount
 
 ## PIT REMOVE BURNED DEM - BRANCH 0 (include all NWM streams) ##
-echo -e $startDiv"Pit remove Burned DEM $hucNumber $branch_zero_id"
+echo -e $startDiv"Pit remove Burned DEM $hucNumber $current_branch_id"
 date -u
 Tstart
 python3 $srcDir/fill_depressions.py \
-    -dem $tempCurrentBranchDataDir/dem_thalwegCond_$branch_zero_id.tif \
-    -out $tempCurrentBranchDataDir/dem_thalwegCond_filled_$branch_zero_id.tif \
-    -f 0.0001
+    -dem $tempCurrentBranchDataDir/dem_thalwegCond_$current_branch_id.tif \
+    -out $tempCurrentBranchDataDir/dem_thalwegCond_filled_$current_branch_id.tif \
+    # -f 0.00001
 Tcount
 
 ## D8 SLOPES ##
@@ -112,7 +112,7 @@ date -u
 Tstart
 python3 $srcDir/vector_stream_network_analysis.py \
     -dem $tempCurrentBranchDataDir/dem_thalwegCond_filled_$current_branch_id.tif \
-    -d8_pntr $tempCurrentBranchDataDir/flowdir_d8_burned_filled_${current_branch_id}_wbt.tif \
+    -d8_pntr $tempCurrentBranchDataDir/wbt-flowdir_d8_burned_filled_$current_branch_id.tif \
     -streams $tempCurrentBranchDataDir/demDerived_streamPixels_$current_branch_id.tif \
     -vector $tempCurrentBranchDataDir/demDerived_reaches_$current_branch_id.shp \
     -analysis $tempCurrentBranchDataDir/demDerived_reaches_analysis_$current_branch_id.shp \

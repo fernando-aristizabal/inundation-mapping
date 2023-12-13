@@ -14,12 +14,12 @@ wbt.set_verbose_mode(False)
 def fill_depressions(
     dem_filename: str,
     out_filename: str,
-    flat_increment: float,
+    flat_increment: float = None,
     fix_flats: float = True,
     max_depth: float = None,
 ):
     """
-    Fill depressions in DEM
+    Fill depressions in DEM. Wrapper for WhiteboxTools fill_depressions.
 
     Parameters
     ----------
