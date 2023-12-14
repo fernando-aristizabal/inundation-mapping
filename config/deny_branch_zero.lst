@@ -61,3 +61,4 @@ stage_{}.txt
 streamOrder_{}.tif
 treeFile_{}.txt
 #usgs_elev_table.csv
+wbt-flowdir_d8_burned_filled_{}.tif

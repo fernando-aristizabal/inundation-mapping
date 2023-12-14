@@ -26,9 +26,11 @@ def vector_stream_network_analysis(
 ):
     """
     Create vector stream network and add attributes like Strahler stream order
-        1. D8 pointer: This tool calculates a D8 flow pointer raster from an input DEM.
-        2. Raster streams to vector: This tool converts a raster stream file into a vector file.
-        3. Vector stream network analysis: This tool performs common stream network analysis operations on an
+        1. Stream link identifier: This tool identifies the links, or tributary segments, in a stream network.
+        2. Stream link length: This tool measures the length of each link in a stream network.
+        3. Stream link slope: This tool measures the slope of each link in a stream network.
+        4. Raster streams to vector: This tool converts a raster stream file into a vector file.
+        5. Vector stream network analysis: This tool performs common stream network analysis operations on an
            input vector stream file.
 
     Parameters
@@ -36,7 +38,7 @@ def vector_stream_network_analysis(
     dem_filename: str
         DEM filename
     d8_pntr_filename: str
-        Flow accumulation filename
+        Flow direction filename
     stream_raster_filename: str
         Stream raster filename
     stream_vector_filename: str
@@ -44,74 +46,24 @@ def vector_stream_network_analysis(
     """
 
     # Check input files
+    assert os.path.isfile(d8_pntr_filename), 'ERROR: input D8 flow direction file not found: ' + str(
+        d8_pntr_filename
+    )
     assert os.path.isfile(dem_filename), 'ERROR: input DEM file not found: ' + str(dem_filename)
     assert os.path.isfile(stream_raster_filename), 'ERROR: input stream raster file not found: ' + str(
         stream_raster_filename
     )
 
-    def d8_pointer(dem_filename, d8_pntr_filename, pntr):
-        """
-        Create flow direction raster from DEM. Wrapper for WhiteboxTools d8_pointer.
-
-        Parameters
-        ----------
-        dem_filename: str
-            DEM filename
-        d8_pntr: str
-            Flow accumulation filename
-        pntr: str
-            Output pointer mapping
-            Options: 'wbt', 'TauDEM'
-        """
-        if pntr in ['TauDEM', 'wbt']:
-            esri_pntr = False
-        elif pntr == 'esri':
-            esri_pntr = True
-
-        # Compute flow direction
-        if wbt.d8_pointer(dem_filename, d8_pntr_filename, esri_pntr) != 0:
-            raise Exception('ERROR: WhiteboxTools d8_pointer failed')
-
-        assert os.path.isfile(d8_pntr_filename), 'ERROR: flowdir file not found: ' + str(d8_pntr_filename)
-
-        if pntr == 'TauDEM':
-            # Reclassify WhiteboxTools flow direction to TauDEM flow direction
-            with rio.open(d8_pntr_filename) as src:
-                profile = src.profile
-                nodata = src.nodata
-                crs = src.crs
-
-                dem = src.read(1)
-
-            data = dem.copy()
-
-            data[dem == 0] = nodata
-            data[dem == 1] = 2
-            data[dem == 2] = 1
-            data[dem == 4] = 8
-            data[dem == 8] = 7
-            data[dem == 16] = 6
-            data[dem == 32] = 5
-            data[dem == 64] = 4
-            data[dem == 128] = 3
-
-            del dem
-
-            # Write output
-            with rio.open(d8_pntr_filename, "w", **profile) as dst:
-                profile.update(dtype=rio.int16, count=1, compress="lzw", crs=crs)
-                dst.write(data, 1)
-
     def stream_link_identifier(
-        d8_pntr, stream_raster_filename, stream_id_filename, pntr, zero_background=False
+        d8_pntr_filename, stream_raster_filename, stream_id_filename, pntr, zero_background=False
     ):
         """
-        Wrapper for WhiteboxTools stream_link_identifier
+        This tool identifies the links, or tributary segments, in a stream network. Wrapper for WhiteboxTools stream_link_identifier.
 
         Parameters
         ----------
-        d8_pntr: str
-            Flow accumulation filename
+        d8_pntr_filename: str
+            Flow direction filename
         stream_raster_filename: str
             Stream raster filename
         stream_id_filename: str
@@ -127,7 +79,7 @@ def vector_stream_network_analysis(
 
         if (
             wbt.stream_link_identifier(
-                d8_pntr, stream_raster_filename, stream_id_filename, esri_pntr, zero_background
+                d8_pntr_filename, stream_raster_filename, stream_id_filename, esri_pntr, zero_background
             )
             != 0
         ):
@@ -140,15 +92,15 @@ def vector_stream_network_analysis(
         )
 
     def stream_link_length(
-        d8_pntr, stream_link_filename, stream_length_filename, pntr, zero_background=False
+        d8_pntr_filename, stream_link_filename, stream_length_filename, pntr, zero_background=False
     ):
         """
-        Wrapper for WhiteboxTools stream_link_length
+        This tool measures the length of each link in a stream network. Wrapper for WhiteboxTools stream_link_length.
 
         Parameters
         ----------
-        d8_pntr: str
-            Flow accumulation filename
+        d8_pntr_filename: str
+            Flow direction filename
         stream_link_filename: str
             Stream link identifier filename
         stream_length_filename: str
@@ -164,22 +116,27 @@ def vector_stream_network_analysis(
 
         if (
             wbt.stream_link_length(
-                d8_pntr, stream_link_filename, stream_length_filename, esri_pntr, zero_background
+                d8_pntr_filename, stream_link_filename, stream_length_filename, esri_pntr, zero_background
             )
             != 0
         ):
             raise Exception('ERROR: WhiteboxTools stream_link_length failed')
 
     def stream_link_slope(
-        d8_pntr, stream_link_filename, dem_filename, stream_slope_filename, pntr, zero_background=False
+        d8_pntr_filename,
+        stream_link_filename,
+        dem_filename,
+        stream_slope_filename,
+        pntr,
+        zero_background=False,
     ):
         """
-        Wrapper for WhiteboxTools stream_link_slope
+        This tool measures the slope of each link in a stream network. Wrapper for WhiteboxTools stream_link_slope.
 
         Parameters
         ----------
-        d8_pntr: str
-            Flow accumulation filename
+        d8_pntr_filename: str
+            Flow direction filename
         stream_link_filename: str
             Stream link identifier filename
         dem_filename: str
@@ -197,7 +154,12 @@ def vector_stream_network_analysis(
 
         if (
             wbt.stream_link_slope(
-                d8_pntr, stream_link_filename, dem_filename, stream_slope_filename, esri_pntr, zero_background
+                d8_pntr_filename,
+                stream_link_filename,
+                dem_filename,
+                stream_slope_filename,
+                esri_pntr,
+                zero_background,
             )
             != 0
         ):
@@ -205,13 +167,13 @@ def vector_stream_network_analysis(
 
     def raster_streams_to_vector(stream_raster_filename, d8_pntr_filename, stream_vector_filename, pntr):
         """
-        Wrapper for WhiteboxTools raster_streams_to_vector
+        This tool converts a raster stream file into a vector file. Wrapper for WhiteboxTools raster_streams_to_vector
 
         Parameters
         ----------
         stream_raster_filename: str
             Stream raster filename
-        d8_pntr: str
+        d8_pntr_filename: str
             Flow accumulation filename
         stream_vector_filename: str
             Stream vector filename
@@ -250,6 +212,31 @@ def vector_stream_network_analysis(
         snap=0.1,
         crs='epsg:5070',
     ):
+        """
+        This tool performs common stream network analysis operations on an input vector stream file. Wrapper for WhiteboxTools vector_stream_network_analysis.
+
+        Parameters
+        ----------
+        stream_vector_filename: str
+            Stream vector filename
+        dem_filename: str
+            DEM filename
+        stream_vector_analysis_filename: str
+            Stream vector analysis filename
+        stream_id_filename: str
+            Stream link identifier filename
+        stream_length_filename: str
+            Stream link length filename
+        stream_slope_filename: str
+            Stream link slope filename
+        cutting_height: float
+            Cutting height
+        snap: float
+            Snap distance
+        crs: str
+            Coordinate reference system
+        """
+
         # Vector stream network analysis
         if (
             wbt.vector_stream_network_analysis(
@@ -271,7 +258,7 @@ def vector_stream_network_analysis(
 
         stream_vector_in['STRM_VAL'] = stream_vector_in['STRM_VAL'].astype(int)
 
-        # Update stream vector attributes to TauDEM convention
+        # Update stream vector attributes to TauDEM streamnet convention
         stream_vector['LINKNO'] = stream_vector['FID'].astype(int)
         stream_vector['DSLINKNO'] = stream_vector['DS_LINK_ID'].astype(int) + 1
         stream_vector['strmOrder'] = stream_vector['STRAHLER'].astype(int)
@@ -285,40 +272,39 @@ def vector_stream_network_analysis(
 
         stream_vector = stream_vector[['FID', 'LINKNO', 'DSLINKNO', 'strmOrder', 'geometry']]
 
-        # Read stream link identifier, length, and slope rasters
-        with rio.open(stream_id_filename) as id_src, rio.open(stream_length_filename) as length_src, rio.open(
-            stream_slope_filename
-        ) as slope_src:
-            id = id_src.read(1)
-            length = length_src.read(1)
-            slope = slope_src.read(1)
+        # # Read stream link identifier, length, and slope rasters
+        # with rio.open(stream_id_filename) as id_src, rio.open(stream_length_filename) as length_src, rio.open(
+        #     stream_slope_filename
+        # ) as slope_src:
+        #     id = id_src.read(1)
+        #     length = length_src.read(1)
+        #     slope = slope_src.read(1)
 
-        # Get length and slope from rasters for each stream link
-        lengths = list(set(zip(id[id > 0], length[id > 0])))
-        slopes = list(set(zip(id[id > 0], slope[id > 0])))
+        # # Get length and slope from rasters for each stream link
+        # lengths = list(set(zip(id[id > 0], length[id > 0])))
+        # slopes = list(set(zip(id[id > 0], slope[id > 0])))
 
-        stream_vector['length'] = stream_vector['LINKNO'].map(dict(lengths))
-        stream_vector['slope'] = stream_vector['LINKNO'].map(dict(slopes))
+        # stream_vector['length'] = stream_vector['LINKNO'].map(dict(lengths))
+        # stream_vector['slope'] = stream_vector['LINKNO'].map(dict(slopes))
 
         stream_vector.to_file(stream_vector_filename, crs=crs)
 
-    # # Create flow direction raster
-    # d8_pointer(dem_filename, d8_pntr_filename, pntr)
+    ### Main routines called below ###
 
     # Stream link identifier
     stream_link_identifier(
         d8_pntr_filename, stream_raster_filename, stream_id_filename, pntr, zero_background=False
     )
 
-    # Stream link length
-    stream_link_length(
-        d8_pntr_filename, stream_id_filename, stream_length_filename, pntr, zero_background=False
-    )
+    # # Stream link length
+    # stream_link_length(
+    #     d8_pntr_filename, stream_id_filename, stream_length_filename, pntr, zero_background=False
+    # )
 
-    # Stream link slope
-    stream_link_slope(
-        d8_pntr_filename, stream_id_filename, dem_filename, stream_slope_filename, pntr, zero_background=False
-    )
+    # # Stream link slope
+    # stream_link_slope(
+    #     d8_pntr_filename, stream_id_filename, dem_filename, stream_slope_filename, pntr, zero_background=False
+    # )
 
     # Raster streams to vector
     raster_streams_to_vector(stream_id_filename, d8_pntr_filename, stream_vector_filename, pntr)

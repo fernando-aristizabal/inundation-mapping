@@ -64,7 +64,7 @@ def flowdir_d8(dem_filename: str, flowdir_filename: str):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Compute flow direction using D8 method")
+    parser = argparse.ArgumentParser(description="Compute D8 flow direction")
     parser.add_argument("-dem", "--dem-filename", help="DEM filename", required=True, type=str)
     parser.add_argument("-flowdir", "--flowdir-filename", help="Out filename", required=True, type=str)
 

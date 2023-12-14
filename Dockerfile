@@ -36,17 +36,12 @@ RUN mkdir -p $taudemDir
 RUN mkdir -p $taudemDir2
 
 ## Move needed binaries to the next stage of the image
-RUN cd taudem/bin && mv -t $taudemDir flowdircond streamnet gagewatershed catchhydrogeo dinfdistdown
+RUN cd taudem/bin && mv -t $taudemDir flowdircond gagewatershed catchhydrogeo dinfdistdown
 RUN cd taudem_accelerated_flowDirections/taudem/build/bin && mv -t $taudemDir2 d8flowdir dinfflowdir
 
 
-
-
 ###############################################################################################
-
-
-
-# Base Image that has GDAL, PROJ, etc
+## Base Image that has GDAL, PROJ, etc. and the compiled Taudem binaries from the builder image
 FROM ghcr.io/osgeo/gdal:ubuntu-full-3.8.0
 ARG dataDir=/data
 ENV projectDir=/foss_fim
@@ -71,7 +66,8 @@ RUN mkdir -p $depDir
 COPY --from=builder $depDir $depDir
 
 RUN apt update --fix-missing
-RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt install -y p7zip-full python3-pip time mpich parallel libgeos-dev expect tmux rsync tzdata
+RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt install -y p7zip-full python3-pip time mpich parallel \
+    libgeos-dev expect tmux rsync tzdata
 
 RUN apt auto-remove
 
