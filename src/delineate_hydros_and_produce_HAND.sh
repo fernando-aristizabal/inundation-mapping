@@ -116,10 +116,7 @@ python3 $srcDir/vector_stream_network_analysis.py \
     -streams $tempCurrentBranchDataDir/demDerived_streamPixels_$current_branch_id.tif \
     -vector $tempCurrentBranchDataDir/demDerived_reaches_$current_branch_id.shp \
     -analysis $tempCurrentBranchDataDir/demDerived_reaches_analysis_$current_branch_id.shp \
-    -id $tempCurrentBranchDataDir/demDerived_reach_id_$current_branch_id.tif \
-    -length $tempCurrentBranchDataDir/demDerived_reach_length_$current_branch_id.tif \
-    -slope $tempCurrentBranchDataDir/demDerived_reach_slope_$current_branch_id.tif
-
+    -id $tempCurrentBranchDataDir/demDerived_reach_id_$current_branch_id.tif
 Tcount
 
 ## SPLIT DERIVED REACHES ##
