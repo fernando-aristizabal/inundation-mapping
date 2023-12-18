@@ -15,7 +15,7 @@ RUN git clone https://github.com/dtarb/taudem.git
 RUN git clone https://github.com/fernandoa123/cybergis-toolkit.git taudem_accelerated_flowDirections
 
 RUN apt-get update --fix-missing && apt-get install -y cmake mpich \
-    libgtest-dev libboost-test-dev libnetcdf-dev && rm -rf /var/lib/apt/lists/*
+    libgtest-dev libboost-test-dev libnetcdf-dev openjdk-17-jdk && rm -rf /var/lib/apt/lists/*
 
 ## Compile Main taudem repo ##
 RUN mkdir -p taudem/bin
@@ -66,8 +66,7 @@ RUN mkdir -p $depDir
 COPY --from=builder $depDir $depDir
 
 RUN apt update --fix-missing
-RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt install -y p7zip-full python3-pip time mpich parallel \
-    libgeos-dev expect tmux rsync tzdata
+RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt install -y p7zip-full python3-pip time mpich parallel libgeos-dev expect tmux rsync tzdata openjdk-17-jdk
 
 RUN apt auto-remove
 
@@ -89,7 +88,7 @@ ENV PYTHONPATH=${PYTHONPATH}:$srcDir:$projectDir/unit_tests:$projectDir/tools
 
 COPY Pipfile .
 COPY Pipfile.lock .
-RUN pip3 install pipenv==2022.4.8 && PIP_NO_CACHE_DIR=off pipenv install --system --deploy --ignore-pipfile
+RUN pip3 install pipenv && PIP_NO_CACHE_DIR=off pipenv install --system --deploy --ignore-pipfile
 
 # ----------------------------------
 # Mar 2023
