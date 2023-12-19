@@ -167,9 +167,9 @@ def vector_stream_network_analysis(
             raise Exception('ERROR: WhiteboxTools vector_stream_network_analysis failed')
 
         assert os.path.isfile(
-            stream_vector_filename
-        ), 'ERROR: stream vector file not created from vector_stream_network_analysis: ' + str(
-            stream_vector_filename
+            stream_vector_analysis_filename
+        ), 'ERROR: stream vector analysis file not created from vector_stream_network_analysis: ' + str(
+            stream_vector_analysis_filename
         )
 
         # Add stream attributes to stream vector

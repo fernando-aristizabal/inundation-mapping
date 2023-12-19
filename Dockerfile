@@ -15,7 +15,7 @@ RUN git clone https://github.com/dtarb/taudem.git
 RUN git clone https://github.com/fernandoa123/cybergis-toolkit.git taudem_accelerated_flowDirections
 
 RUN apt-get update --fix-missing && apt-get install -y cmake mpich \
-    libgtest-dev libboost-test-dev libnetcdf-dev openjdk-17-jdk && rm -rf /var/lib/apt/lists/*
+    libgtest-dev libboost-test-dev libnetcdf-dev && rm -rf /var/lib/apt/lists/*
 
 ## Compile Main taudem repo ##
 RUN mkdir -p taudem/bin
@@ -66,7 +66,7 @@ RUN mkdir -p $depDir
 COPY --from=builder $depDir $depDir
 
 RUN apt update --fix-missing
-RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt install -y p7zip-full python3-pip time mpich parallel libgeos-dev expect tmux rsync tzdata openjdk-17-jdk
+RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt install -y p7zip-full python3-pip time mpich parallel libgeos-dev expect tmux rsync tzdata
 
 RUN apt auto-remove
 
