@@ -1,0 +1,6 @@
+{
+    "output_crs": "EPSG:5070",
+    "output_resolution": 3,
+    "source_max_resolution": 10,
+    "source_max_resolution_unit": "feet"
+}
