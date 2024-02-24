@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   gdal_ops:
-    image: ghcr.io/osgeo/gdal:ubuntu-small-3.7.0
+    image: ghcr.io/osgeo/gdal:ubuntu-small-3.8.3
     container_name: gdal_ops
     volumes:
       - ./data:/data
