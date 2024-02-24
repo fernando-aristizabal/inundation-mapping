@@ -65,7 +65,7 @@ def get_raster_resolution(gdal_path):
     return max(gt[1], -gt[5]), srs
 
 
-units_map = {"feet": ["us survey foot"]}
+units_map = {"feet": ["us survey foot"], "meter": ["meter", "metre"]}
 
 
 def is_resolution_in_units(srs, units):
@@ -91,7 +91,7 @@ def process_huc(
     processing_record = HUCProcessingRecord(huc=huc, start_time=start_time)
     logger.info("Starting processing...")
     try:
-        risks = [["500yr", ["M", "Moderate"], ""], ["100yr", ["H", "High"], ""]]
+        risks = [["500yr", ["M", "Moderate", "MODERATE", "Low or Moderate", "L"], ""], ["100yr", ["H", "High", "HIGH"], ""]]
         output_hucdir_path = os.path.join(output_dir, huc)
         tmp_dir_path = os.path.join(output_dir, "tmp")
 
@@ -104,12 +104,6 @@ def process_huc(
             processing_record.update_on_success()
             return
 
-        for risk_value in risks:
-            if not has_specific_risk_values(gdb_path=gdb_gdal_path, layer_name="FLD_HAZ_AR", risk_values=risk_value[1]):
-                logger.error("Unknown Risk Value")
-                processing_record.update_on_error("UnknownRiskValue", "")
-                return
-
 
         # 1. Check Raster Resolution and CRS
         res, srs = get_raster_resolution(gdb_gdal_path)
@@ -118,15 +112,22 @@ def process_huc(
             processing_record.update_on_error("IncorrectResolution", "")
             return
 
+        # 2. Check floodplain has at least one attribute with EST_Risk field having known risk_values
+        for risk_value in risks:
+            if not has_specific_risk_values(gdb_path=gdb_gdal_path, layer_name="FLD_HAZ_AR", risk_values=risk_value[1]):
+                logger.error("ZeroValidRiskValues")
+                processing_record.update_on_error("Does not have any feature with valid risk value", "")
+                return
+
         logger.info("Reprojecting floodplain...")
-        # 2. Reproject Vector Layer
+        # 3. Reproject Vector Layer
         reprojected_vector = os.path.join(tmp_dir_path, f"{huc}.shp")
         os.makedirs(os.path.dirname(reprojected_vector), exist_ok=True)
         ogr_cmd = ["ogr2ogr", "-t_srs", output_crs, reprojected_vector, gdb_gdal_path, "FLD_HAZ_AR"]
         subprocess.run(ogr_cmd, check=True)
 
 
-        # 3. Convert Vector to Raster for each EST_Risk value
+        # 4. Convert Vector to Raster for each EST_Risk value
         for risk_value in risks:
             logger.info(f"Creating inundation map for {risk_value[0]}...")
             output_raster = risk_value[2]
@@ -150,7 +151,7 @@ def process_huc(
             ]
             subprocess.run(gdal_rasterize_cmd, check=True)
 
-
+        # 5. Merge 100yr floodplain into 500yr
         logger.info(f"Merging 100yr into 500yr...")
         gdal_merge_cmd = [
             "gdal_calc.py",
