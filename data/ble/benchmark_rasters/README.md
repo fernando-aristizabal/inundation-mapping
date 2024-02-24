@@ -3,6 +3,9 @@ Read `main.py` docstring
 
 ## Getting Started
 
+0. **Create `bfe_hucs_gdal_paths.csv`:**
+   Use sample file provided to create `bfe_hucs_gdal_paths.csv`
+
 1. **Start Docker Compose:**
    Navigate to this folder and start the Docker container using Docker Compose:
    ```bash
