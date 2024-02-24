@@ -1,3 +1,46 @@
+#!/usr/bin/env python
+
+"""
+This script is designed to create Benchmark Inundation Maps for specific Hydrologic Unit Codes (HUCs) based on
+geospatial data from GeoDatabases (GDB). The primary functionality includes:
+
+1. Reading configurations and HUC paths from CSV files.
+2. Checking the raster resolution and coordinate reference system (CRS) for compliance with provided parameters.
+3. Reprojecting "FLD_HAZ_AR" vector layers to a desired output CRS.
+4. Creating inundation maps for specified risk levels (e.g., "High" > 100yr and "Moderate" > 500yr).
+5. Running the process in parallel for multiple HUCs to optimize performance.
+
+The script employs multiprocessing to handle each HUC in a separate process, enhancing efficiency for large datasets.
+GDAL/OGR compiled binaries are used to fast track the process.
+Logging is implemented to track the process and record any errors or warnings.
+
+Usage:
+The script requires several command-line arguments for its configuration, including output directory, output CRS, output
+resolution, maximum source resolution, source units, and the number of parallel processes. These arguments are specified
+when running the script from the command line.
+
+Requirements:
+- Python 3.6 or higher
+- GDAL/OGR with Python bindings
+- Necessary permissions to access and write to the specified directories and files
+
+The `bfe_hucs_gdal_paths.csv` file should be avialable adjacent to main.py and contain rows with HUC identifiers and
+corresponding GDAL paths to their GeoDatabases.
+
+Example:
+`python main.py -o /path/to/output -oc EPSG:5070 -or 3 -smr 10 -su feet -pp 4 -ll INFO`
+
+Where:
+- -o: Output directory path
+- -oc: Output CRS (e.g., EPSG:5070)
+- -or: Output resolution in integer
+- -smr: Source maximum resolution in integer
+- -su: Source units (e.g., feet)
+- -pp: Number of parallel processes to launch
+- -ll: Log level (e.g., INFO, DEBUG)
+"""
+
+
 import argparse
 import csv
 import logging
@@ -216,7 +259,7 @@ def setup_logging(log_level: int, name: str) -> logging.Logger:
 
 def parse_arguments():
     """Parse command-line arguments."""
-    parser = argparse.ArgumentParser(description="Create BLE Benchmark Inundation Maps")
+    parser = argparse.ArgumentParser(description="Create BLE Benchmark Inundation Maps at Specified Resolution")
     parser.add_argument("-o", "--output_dir", required=True, type=str, help="Directory path for output data.")
     parser.add_argument("-oc", "--output_crs", required=True, type=str, help="")
     parser.add_argument("-or", "--output_resolution", required=True, type=int, help="")
