@@ -17,4 +17,5 @@ config/*.swp
 .private/
 data/ble/benchmark_rasters/data/*
 *.env
-data/ble/benchmark_rasters/bfe_hucs_gdal_paths.csv
+*hucs.csv
+*.log
