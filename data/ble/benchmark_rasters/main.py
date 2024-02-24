@@ -107,7 +107,11 @@ def process_huc(
 
         # 1. Check Raster Resolution and CRS
         res, srs = get_raster_resolution(gdb_gdal_path)
-        if res is None or not is_resolution_in_units(srs, source_max_resolution_units) or res > source_max_resolution:
+        if res is None:
+            logger.error(f"Incorrect gdal path")
+            processing_record.update_on_error("FileNotFound", "")
+            return
+        if not is_resolution_in_units(srs, source_max_resolution_units) or res > source_max_resolution:
             logger.error(f"Incorrect resolution or SRS: {res} | {srs}")
             processing_record.update_on_error("IncorrectResolution", "")
             return
