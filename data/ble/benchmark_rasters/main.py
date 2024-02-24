@@ -9,7 +9,7 @@ from datetime import datetime
 from multiprocessing import Manager
 from timeit import default_timer as timer
 
-from osgeo import gdal, osr
+from osgeo import gdal, osr, ogr
 
 
 @dataclass
@@ -33,11 +33,31 @@ class HUCProcessingRecord:
         self.end_time = datetime.now()
         self.status = "success"
 
+def has_specific_risk_values(gdb_path, layer_name, risk_values):
+    dataSource = ogr.Open(gdb_path)
+    if dataSource is None:
+        return False
+
+    sql_query = f"""SELECT EST_Risk FROM {layer_name} WHERE EST_Risk IN ({', '.join(f"'{val}'" for val in risk_values)}) LIMIT 1"""
+    layer = dataSource.ExecuteSQL(sql_query)
+    if layer is None:
+        return False
+
+    feature = layer.GetNextFeature()
+    if feature is None:
+        return False
+
+    dataSource.ReleaseResultSet(layer)
+    return True
+
 
 def get_raster_resolution(gdal_path):
-    dataset = gdal.Open(gdal_path, gdal.GA_ReadOnly)
-    if not dataset:
+    main_dataset = gdal.Open(gdal_path, gdal.GA_ReadOnly)
+    if not main_dataset:
         return None, None
+    subdatasets = main_dataset.GetSubDatasets()
+    dataset_name = subdatasets[0][0] # checking first subdataset
+    dataset = gdal.Open(dataset_name, gdal.GA_ReadOnly)
     gt = dataset.GetGeoTransform()
     srs = osr.SpatialReference()
     srs.ImportFromWkt(dataset.GetProjection())
@@ -52,7 +72,7 @@ def is_resolution_in_units(srs, units):
     return srs.GetLinearUnitsName().lower() in units_map[units]
 
 
-def translate_huc(
+def process_huc(
     huc,
     gdb_gdal_path,
     source_max_resolution,
@@ -64,20 +84,39 @@ def translate_huc(
     log_folder: str,
     lock,
 ) -> None:
+
     start_time = datetime.now()
 
     logger = setup_logging(log_level, f"{log_folder}/{huc}")
     processing_record = HUCProcessingRecord(huc=huc, start_time=start_time)
     logger.info("Starting processing...")
     try:
+        risks = [["500yr", ["M", "Moderate"], ""], ["100yr", ["H", "High"], ""]]
         output_hucdir_path = os.path.join(output_dir, huc)
         tmp_dir_path = os.path.join(output_dir, "tmp")
 
+        for risk_value in risks:
+            output_raster = os.path.join(output_hucdir_path, risk_value[0], f"ble_huc_{huc}_extent_{risk_value[0]}.tif")
+            risk_value[2] = output_raster
+
+        if all([os.path.exists(risk_value[2]) for risk_value in risks]):
+            logger.info(f"Processing skipped as outputs already exist")
+            processing_record.update_on_success()
+            return
+
+        for risk_value in risks:
+            if not has_specific_risk_values(gdb_path=gdb_gdal_path, layer_name="FLD_HAZ_AR", risk_values=risk_value[1]):
+                logger.error("Unknown Risk Value")
+                processing_record.update_on_error("UnknownRiskValue", "")
+                return
+
+
         # 1. Check Raster Resolution and CRS
-        res, srs = get_raster_resolution(f"OpenFileGDB:{gdb_gdal_path}:BLE_DEP01PCT")
+        res, srs = get_raster_resolution(gdb_gdal_path)
         if res is None or not is_resolution_in_units(srs, source_max_resolution_units) or res > source_max_resolution:
             logger.error(f"Incorrect resolution or SRS: {res} | {srs}")
             processing_record.update_on_error("IncorrectResolution", "")
+            return
 
         logger.info("Reprojecting floodplain...")
         # 2. Reproject Vector Layer
@@ -86,33 +125,33 @@ def translate_huc(
         ogr_cmd = ["ogr2ogr", "-t_srs", output_crs, reprojected_vector, gdb_gdal_path, "FLD_HAZ_AR"]
         subprocess.run(ogr_cmd, check=True)
 
-        risks = [["Moderate", "500yr", ""], ["High", "100yr", ""]]
 
         # 3. Convert Vector to Raster for each EST_Risk value
         for risk_value in risks:
-            logger.info(f"Creating inundation map for {risk_value[1]}...")
-            output_raster = os.path.join(output_hucdir_path, risk_value[1], f"ble_huc_{huc}_extent_{risk_value[1]}.tif")
+            logger.info(f"Creating inundation map for {risk_value[0]}...")
+            output_raster = risk_value[2]
             os.makedirs(os.path.dirname(output_raster), exist_ok=True)
             gdal_rasterize_cmd = [
                 "gdal_rasterize",
                 "-burn",
                 "1",
                 "-where",
-                f"EST_Risk='{risk_value[0]}'",
+                f"""EST_Risk IN ({', '.join(f"'{val}'" for val in risk_value[1])})""",
                 "-at",
                 "-tr",
                 str(output_resolution),
                 str(output_resolution),
                 "-ot",
-                "Int16",
+                "Byte",
                 "-co",
                 "COMPRESS=LZW",
                 reprojected_vector,
                 output_raster,
             ]
             subprocess.run(gdal_rasterize_cmd, check=True)
-            risk_value[2] = output_raster
 
+
+        logger.info(f"Merging 100yr into 500yr...")
         gdal_merge_cmd = [
             "gdal_calc.py",
             "-A",
@@ -217,7 +256,7 @@ def main():
     with ProcessPoolExecutor(max_workers=args.parallel_processes_count) as executor:
         for row in hucs_list:
             executor.submit(
-                translate_huc,
+                process_huc,
                 row[0],
                 row[1],
                 args.source_max_resolution,
