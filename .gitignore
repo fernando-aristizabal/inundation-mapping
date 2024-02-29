@@ -15,8 +15,4 @@ config/*.swp
 **/.DS_Store
 **/*_pytest.py
 .private/
-data/ble/benchmark_rasters/data/*
-*.env
-*hucs.csv
-*.log
-data/ble/benchmark_rasters/bfe_hucs_gdal_paths.csv
+cache/
