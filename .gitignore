@@ -16,3 +16,6 @@ config/*.swp
 **/*_pytest.py
 .private/
 cache/
+data/ble/benchmark_rasters/bfe_hucs_gdal_paths.csv
+*.env
+data/ble/benchmark_rasters/data/
